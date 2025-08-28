@@ -1,5 +1,5 @@
 <template>
-  <div class="settings">
+  <!-- <div class="settings">
     <h2><i class="ri-settings-3-fill"></i> Settings</h2>
     <div class="input-group">
       <label><i class="ri-twitch-fill"></i> Twitch Channel</label>
@@ -16,32 +16,58 @@
     <button @click="saveSettings" class="save-button">
       <i class="ri-save-fill"></i> Save Settings
     </button>
-  </div>
+  </div> -->
 </template>
 
 <script>
 export default {
   name: 'Settings',
+  props: {
+    initialSettings: {
+      type: Object,
+      default: () => ({
+        twitchChannel: '',
+        youtubeLiveId: '',
+        kickChannel: '',
+      }),
+    },
+  },
   data() {
     return {
-      twitchChannel: '',
-      youtubeLiveId: '',
-      kickChannel: '',
+      twitchChannel: this.initialSettings.twitchChannel,
+      youtubeLiveId: this.initialSettings.youtubeLiveId,
+      kickChannel: this.initialSettings.kickChannel,
     };
+  },
+  watch: {
+    initialSettings: {
+      handler(newSettings) {
+        console.log('Settings.vue: Updated initialSettings:', newSettings);
+        this.twitchChannel = newSettings.twitchChannel || this.twitchChannel;
+        this.youtubeLiveId = newSettings.youtubeLiveId || this.youtubeLiveId;
+        this.kickChannel = newSettings.kickChannel || this.kickChannel;
+        // Auto-emit settings when initialSettings change
+        this.saveSettings();
+      },
+      deep: true,
+      immediate: true,
+    },
   },
   methods: {
     saveSettings() {
-      this.$emit('update-settings', {
+      const settings = {
         twitchChannel: this.twitchChannel,
         youtubeLiveId: this.youtubeLiveId,
         kickChannel: this.kickChannel,
-      });
+      };
+      this.$emit('update-settings', settings);
     },
   },
 };
 </script>
 
-<style scoped>
+
+<!-- <style scoped>
 .settings {
   background: var(--bg-secondary);
   padding: 16px;
@@ -111,4 +137,4 @@ input:focus {
 .save-button i {
   font-size: 1.2em;
 }
-</style>
+</style> -->

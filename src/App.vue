@@ -1,16 +1,19 @@
 <template>
   <div class="app-container" :class="{ 'dark-theme': isDarkTheme }">
-    <header class="app-header">
-      <i class="ri-chat-3-fill"></i>
+    <!-- <header class="app-header">
+      <i class="ri-chat-heart-fill"></i>
       <h1>Chat Aggregator</h1>
       <button @click="toggleTheme" class="theme-toggle">
         <i :class="isDarkTheme ? 'ri-sun-fill' : 'ri-moon-fill'"></i>
-        {{ isDarkTheme ? "Light Theme" : "Dark Theme" }}
+        {{ isDarkTheme ? 'Light Theme' : 'Dark Theme' }}
       </button>
-    </header>
+    </header> -->
     <div class="main-content">
       <aside class="settings-sidebar">
-        <Settings @update-settings="updateSettings" />
+        <Settings
+          @update-settings="updateSettings"
+          :initial-settings="initialSettings"
+        />
       </aside>
       <main class="chat-main">
         <ChatDisplay :messages="messages" />
@@ -20,25 +23,30 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
-import ChatDisplay from "./components/ChatDisplay.vue";
-import Settings from "./components/Settings.vue";
+import { mapState } from 'vuex';
+import ChatDisplay from './components/ChatDisplay.vue';
+import Settings from './components/Settings.vue';
 
 export default {
-  name: "App",
+  name: 'App',
   components: { ChatDisplay, Settings },
   data() {
     return {
       isDarkTheme: false,
+      initialSettings: {
+        twitchChannel: '',
+        youtubeLiveId: '',
+        kickChannel: '',
+      },
     };
   },
   computed: {
-    ...mapState(["messages"]),
+    ...mapState(['messages']),
   },
   watch: {
     messages: {
       handler(newMessages) {
-        console.log("App.vue Messages:", newMessages);
+        console.log('App.vue Messages:', newMessages.length);
       },
       deep: true,
       immediate: true,
@@ -46,25 +54,44 @@ export default {
   },
   methods: {
     updateSettings(settings) {
-      this.$store.dispatch("updateSettings", settings);
+      console.log('App.vue: Updating settings:', settings);
+      this.$store.dispatch('updateSettings', settings);
     },
     toggleTheme() {
       this.isDarkTheme = !this.isDarkTheme;
-      document.documentElement.setAttribute(
-        "data-theme",
-        this.isDarkTheme ? "dark" : "light"
-      );
+      document.documentElement.setAttribute('data-theme', this.isDarkTheme ? 'dark' : 'light');
+    },
+    parseQueryParams() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        twitchChannel: params.get('twitch') || '',
+        youtubeLiveId: params.get('youtube_vid') || '',
+        kickChannel: params.get('kick') || '',
+        theme: params.get('theme') || '',
+      };
     },
   },
   mounted() {
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)"
-    ).matches;
-    this.isDarkTheme = prefersDark;
-    document.documentElement.setAttribute(
-      "data-theme",
-      this.isDarkTheme ? "dark" : "light"
-    );
+    const queryParams = this.parseQueryParams();
+    this.initialSettings = {
+      twitchChannel: queryParams.twitchChannel,
+      youtubeLiveId: queryParams.youtubeLiveId,
+      kickChannel: queryParams.kickChannel,
+    };
+
+    // Set theme from query parameter or system preference
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    this.isDarkTheme = queryParams.theme === 'dark' || (queryParams.theme !== 'light' && prefersDark);
+    document.documentElement.setAttribute('data-theme', this.isDarkTheme ? 'dark' : 'light');
+    console.log('App.vue: Applied theme:', this.isDarkTheme ? 'dark' : 'light');
+
+    // Auto-start services if any channel settings are provided
+    if (this.initialSettings.twitchChannel || this.initialSettings.youtubeLiveId || this.initialSettings.kickChannel) {
+      console.log('App.vue: Applying settings from URL:', this.initialSettings);
+      this.updateSettings(this.initialSettings);
+    } else {
+      console.log('App.vue: No query parameters provided; waiting for settings.');
+    }
   },
 };
 </script>
@@ -73,7 +100,6 @@ export default {
 .app-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 24px;
   font-family: "Inter", system-ui, sans-serif;
   background: var(--bg-primary);
   min-height: 100vh;
@@ -117,10 +143,9 @@ h1 {
 }
 .main-content {
   display: flex;
-  gap: 24px;
 }
 .settings-sidebar {
-  width: 300px;
+  width: 0; /* Hidden settings UI */
   flex-shrink: 0;
 }
 .chat-main {
@@ -131,7 +156,7 @@ h1 {
     flex-direction: column;
   }
   .settings-sidebar {
-    width: 100%;
+    width: 0;
   }
 }
 </style>

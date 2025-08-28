@@ -1,6 +1,6 @@
 # Chat Aggregator
 
-A modern, lightweight, and responsive web application that aggregates live chat messages from Twitch, YouTube, and Kick in real-time. Built with Vue.js and Vite, this project features a sleek sidebar interface, customizable themes (light/dark), and a cohesive color palette. It is optimized for low memory usage (~200-300 MB) and fast performance, making it ideal for streamers and content creators to monitor multiple chat platforms simultaneously.
+A lightweight, responsive web application for aggregating live chat messages from Twitch, YouTube, and Kick in real-time. Built with Vue.js and Vite, it features a full-width chat display, custom color palette, and low memory usage (~200-300 MB). Ideal for streamers, with configuration via URL query parameters and automatic startup.
 
 ## Features
 
@@ -8,14 +8,19 @@ A modern, lightweight, and responsive web application that aggregates live chat 
   - Twitch: Real-time messages via `tmi.js` (IRC WebSockets).
   - YouTube: Polling-based messages via YouTube Data API v3.
   - Kick: Real-time messages via Pusher WebSockets.
-- **Responsive Design**: Sidebar layout with settings on the left and chat display on the right, stacking vertically on mobile.
-- **Custom Theme**: Uses a elegant color palette (`#123a49`, `#2da592`, `#8bcbb7`, `#f5faf6`) with light/dark mode support.
-- **Remixicon Icons**: Platform-specific icons (Twitch, YouTube, Kick) for visual clarity.
+- **URL Query Parameter Configuration**:
+  - Auto-load channel settings with `?twitch=channel&kick=channel&youtube_vid=videoid`.
+  - Set theme with `?theme=dark` or `?theme=light`.
+- **Automatic Startup**: Services start automatically when valid query parameters are provided.
+- **Hidden Settings UI**: Configuration is done via URL; no visible settings form.
+- **Responsive Design**: Full-width chat display, mobile-friendly.
+- **Custom Theme**: Elegant color palette (`#123a49`, `#2da592`, `#8bcbb7`, `#f5faf6`) with light/dark mode support.
+- **Remixicon Icons**: Platform-specific icons (Twitch, YouTube, Kick).
 - **Optimized Performance**:
-  - Limits stored messages to 100 and displayed messages to 50 to reduce RAM usage.
-  - Debounced UI updates and cleaned-up event listeners to prevent memory leaks.
-  - 2-second YouTube polling interval to balance speed and API quota.
-- **Secure Configuration**: YouTube API key stored in `.env` for security.
+  - Memory capped at ~200-300 MB by limiting messages (100 stored, 50 displayed).
+  - Cleaned-up event listeners for Pusher and `tmi.js` to prevent memory leaks.
+  - YouTube polling set to 2 seconds to balance speed and API quota.
+- **Secure Configuration**: YouTube API key stored in `.env`.
 
 ## Prerequisites
 
@@ -48,23 +53,27 @@ A modern, lightweight, and responsive web application that aggregates live chat 
    ```bash
    npm run dev
    ```
-   - Open the app at `http://localhost:5173`.
+   - Open the app at `http://localhost:5173?twitch=yourchannel&kick=yourchannel&youtube_vid=yourvideoid&theme=dark`.
 
 ## Usage
 
-1. **Configure Settings**:
-   - In the left sidebar, enter:
-     - **Twitch Channel**: Your Twitch channel name (e.g., `ninja`).
-     - **YouTube Video ID**: The video ID of a live YouTube stream (e.g., `dQw4w9WgXcQ`).
-     - **Kick Channel**: Your Kick channel slug (e.g., `yourchannelname`).
-   - Click **Save Settings** to connect to the platforms.
+1. **Configure via URL**:
+   - Use query parameters to set channels and theme, e.g.:
+     ```
+     http://localhost:5173?twitch=bertugfahriozer&kick=bertugfahriozer&youtube_vid=QWsdserc&theme=dark
+     ```
+   - Parameters:
+     - `twitch`: Twitch channel name (e.g., `bertugfahriozer`).
+     - `youtube_vid`: YouTube live video ID (e.g., `QWsdserc`).
+     - `kick`: Kick channel slug (e.g., `bertugfahriozer`).
+     - `theme`: `dark` or `light` (defaults to system `prefers-color-scheme`).
+   - The app auto-starts with the specified channels and theme.
 
 2. **View Chats**:
-   - Messages from Twitch, YouTube, and Kick appear in the right chat display in real-time.
-   - Each message shows the platform icon, username, text, and platform name, styled with platform-specific colors (Twitch: purple, YouTube: red, Kick: green).
+   - Messages from Twitch, YouTube, and Kick appear in real-time with platform-specific icons and colors (Twitch: purple, YouTube: red, Kick: green).
 
 3. **Toggle Theme**:
-   - Use the theme toggle button in the header to switch between light and dark modes.
+   - Use the theme toggle button in the header to switch between light and dark modes manually.
 
 ## Project Structure
 
@@ -78,14 +87,14 @@ chat-aggregator/
 │   ├── components/
 │   │   ├── ChatDisplay.vue        # Chat message display with icons
 │   │   ├── HelloWorld.vue        # Default Vite component (unused)
-│   │   ├── Settings.vue          # Sidebar settings form
+│   │   ├── Settings.vue          # Hidden settings logic
 │   ├── services/
 │   │   ├── kickService.js        # Kick chat via Pusher
 │   │   ├── twitchService.js      # Twitch chat via tmi.js
 │   │   ├── youtubeService.js     # YouTube chat via API polling
 │   ├── store/
 │   │   ├── index.js              # Vuex store for state management
-│   ├── App.vue                   # Main app with sidebar layout
+│   ├── App.vue                   # Main app with chat layout
 │   ├── main.js                   # Entry point
 │   ├── style.css                 # Global styles with color palette
 ├── .env                          # Environment variables (not committed)
@@ -109,22 +118,23 @@ chat-aggregator/
 
 ## Optimization Notes
 
-- **Memory Usage**: Capped at ~200-300 MB by limiting messages (100 stored, 50 displayed) and cleaning up event listeners.
-- **YouTube Polling**: Set to 2 seconds to balance performance and API quota (43,200 requests/day). Adjust to 1 second in `youtubeService.js` if needed, but monitor quota.
-- **Security**: `.env` file keeps the YouTube API key secure. Never commit `.env` to Git.
+- **Memory Usage**: Capped at ~200-300 MB with 100 stored messages and 50 displayed.
+- **YouTube Polling**: 2-second interval to balance performance and API quota (43,200 requests/day).
+- **Security**: `.env` file secures the YouTube API key. Never commit `.env` to Git.
 
 ## Troubleshooting
 
 - **YouTube Messages Not Appearing**:
   - Check `.env` for a valid `VITE_YOUTUBE_API_KEY`.
-  - Verify the YouTube video ID is for a live stream.
+  - Ensure `youtube_vid` is for a live stream.
   - Look for `YouTube Polling Error` in the console.
 - **High RAM Usage**:
   - Use Chrome DevTools > Memory to take heap snapshots.
-  - Reduce `maxMessages` in `store/index.js` to 50 or lower.
-  - Disable animations in `ChatDisplay.vue` by removing `animation` styles.
+  - Reduce `maxMessages` in `store/index.js` to 50 if needed.
 - **Kick Icon Missing**:
-  - If `ri-kick-fill` is unavailable, replace with `ri-chat-3-fill` in `ChatDisplay.vue` and `Settings.vue`.
+  - If `ri-kick-fill` is unavailable, replace with `ri-chat-3-fill` in `ChatDisplay.vue`.
+- **No Messages Without Query Parameters**:
+  - The app requires valid `twitch`, `youtube_vid`, or `kick` parameters to start.
 
 ## Contributing
 
