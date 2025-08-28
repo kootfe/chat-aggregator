@@ -61,7 +61,7 @@ export default {
 
 <style scoped>
 .chat-display {
-  height: 500px;
+  min-height: 100vh;
   overflow-y: auto;
   background: var(--bg-secondary);
   border-radius: 12px;
