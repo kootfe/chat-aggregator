@@ -19,6 +19,7 @@ export default class TwitchService {
   }
 
   stop() {
+    this.client.removeAllListeners('message');
     this.client.disconnect().catch(console.error);
   }
 }
